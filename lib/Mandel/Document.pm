@@ -190,8 +190,8 @@ sub is_changed {
 
 =head2 patch
 
-  $self = $self->patch(sub { my($self, $err) = @_ });
-  $self = $self->patch;
+  $self = $self->patch(\%changes, sub { my($self, $err) = @_ });
+  $self = $self->patch(\%changes);
 
 This method will insert/update a partial document. This is useful if C</data>
 does not contain a complete document.
@@ -202,15 +202,27 @@ exist.
 =cut
 
 sub patch {
-  my($self, $cb) = @_;
+  my($self, $changes, $cb) = @_;
+  my $data = $self->data;
+
+  if($changes) {
+    @$data{keys %$changes} = values %$changes;
+  }
+
+  $data = { %$data };
+  delete $data->{_id}; # Mod on _id not allowed
 
   $self->_storage_collection->update(
     { _id => $self->id },
-    { '$set' => $self->data },
+    { '$set' => $data },
     { upsert => bson_true },
-    $cb ? (sub { $self->$cb($_[1]) }) : (),
+    $cb ? (sub {
+      $self->_mark_stored_clean unless $_[1];
+      $self->$cb($_[1]);
+    }) : (),
   );
 
+  $self->_mark_stored_clean unless $cb;
   $self;
 }
 

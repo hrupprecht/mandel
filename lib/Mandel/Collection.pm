@@ -174,6 +174,7 @@ sub patch {
   my($self, $changes, $cb) = @_;
   my $extra = $self->{extra};
 
+  warn '[Mandel::Collection::patch] ', Data::Dumper->new([$changes, $self->{query}, $extra])->Indent(1)->Sortkeys(1)->Terse(1)->Maxdepth(3)->Dump if DEBUG;
   $self->_storage_collection->update(
     $self->{query} || {},
     {
