@@ -183,7 +183,7 @@ sub patch {
       upsert => $extra->{upsert} // bson_false,
       multi => $extra->{multi} // bson_true,
     },
-    $cb ? ($cb) : (),
+    $cb ? (sub { $self->$cb($_[1]) }) : (),
   );
 
   $self;
